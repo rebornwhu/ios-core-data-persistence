@@ -23,31 +23,69 @@ class ViewController: UIViewController {
         let context = appDelegate.managedObjectContext
         let request = NSFetchRequest(entityName:lineEntityName)
         
+        var objects: [AnyObject]?
         do {
-            let objects = try context.executeFetchRequest(request)
-            
-            if let objectList = objects {
-                for oneObject in objectList {
-                    let lineNum = oneObject.valueForKey(lineNumberKey) as! String
-                    let textField = lineFields[lineNum]
-                    textField.text = lineText
-                }
-            }
-            
+            objects = try context.executeFetchRequest(request)
         } catch let error as NSError {
             print(error)
             return
         }
         
+        if let objectList = objects {
+            for oneObject in objectList {
+                let lineNum = oneObject.valueForKey(lineNumberKey)!.integerValue
+                let lineText = oneObject.valueForKey(lineTextKey) as! String
+                let textField = lineFields[lineNum]
+                textField.text = lineText
+            }
+        }
+        else {
+            print("There was an error")
+            return // No need to continue at this point
+        }
         
-        
+        let app = UIApplication.sharedApplication()
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "applicationWillResignActive:", name: UIApplicationWillResignActiveNotification, object: app)
     }
 
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
+    func applicationWillResignActive(notification:NSNotification) {
+        let appDelegate = UIApplication.sharedApplication().delegate as! AppDelegate
+        let context = appDelegate.managedObjectContext
+        
+        for var i = 0; i < lineFields.count; i++ {
+            let textField = lineFields[i]
+            
+            let request = NSFetchRequest(entityName: lineEntityName)
+            let pred = NSPredicate(format: "%K = %d", lineNumberKey, i)
+            request.predicate = pred
+            
+            var objects: [AnyObject]?
+            do {
+                objects = try context.executeFetchRequest(request)
+            } catch let error as NSError {
+                print(error)
+                return
+            }
+            
+            if let objectList = objects {
+                var theLine: NSManagedObject! = nil
+                if objectList.count > 0 {
+                    theLine = objectList[0] as! NSManagedObject
+                }
+                else {
+                    theLine = NSEntityDescription.insertNewObjectForEntityForName(lineEntityName, inManagedObjectContext: context)
+                }
+                
+                theLine.setValue(i, forKey: lineNumberKey)
+                theLine.setValue(textField.text, forKey: lineTextKey)
+            }
+            else {
+                print("There was an error 2")
+            }
+        }
+        
+        appDelegate.saveContext()
     }
-
 
 }
 
