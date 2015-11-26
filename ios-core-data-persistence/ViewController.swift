@@ -7,14 +7,40 @@
 //
 
 import UIKit
+import CoreData
 
 class ViewController: UIViewController {
 
     @IBOutlet var lineFields:[UITextField]!
+    private let lineEntityName = "Line"
+    private let lineNumberKey = "lineNumber"
+    private let lineTextKey = "lineText"
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
+
+        let appDelegate = UIApplication.sharedApplication().delegate as! AppDelegate
+        let context = appDelegate.managedObjectContext
+        let request = NSFetchRequest(entityName:lineEntityName)
+        
+        do {
+            let objects = try context.executeFetchRequest(request)
+            
+            if let objectList = objects {
+                for oneObject in objectList {
+                    let lineNum = oneObject.valueForKey(lineNumberKey) as! String
+                    let textField = lineFields[lineNum]
+                    textField.text = lineText
+                }
+            }
+            
+        } catch let error as NSError {
+            print(error)
+            return
+        }
+        
+        
+        
     }
 
     override func didReceiveMemoryWarning() {
