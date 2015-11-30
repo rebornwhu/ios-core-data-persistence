@@ -80,7 +80,7 @@ class ViewController: UIViewController {
                 theLine.setValue(textField.text, forKey: lineTextKey)
             }
             else {
-                print("There was an error 2")
+                print("There was an error #2")
             }
         }
         
